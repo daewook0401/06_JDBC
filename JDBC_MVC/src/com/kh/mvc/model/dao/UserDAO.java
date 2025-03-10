@@ -1,9 +1,16 @@
 package com.kh.mvc.model.dao;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.kh.mvc.model.dto.UserDTO;
+import com.kh.mvc.util.JdbcUtil;
 
 /**
  * DAO(Data Access Object)
@@ -56,7 +63,17 @@ public class UserDAO {
 	 * 
 	 */
 	
-	public List<UserDTO> findAll() {
+	static {
+		
+		try {
+			Class.forName("oracle.jdbc.driver.OracleDriver");
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+			System.out.println("ojdbc 클래스 못찾음");
+		}
+	}
+	
+	public List<UserDTO> findAll(Connection conn){
 		// DB 요청
 		/*
 		 * VO / DTO / Entity
@@ -72,13 +89,167 @@ public class UserDAO {
 										+	", USER_ID"
 										+	", USER_PW"
 										+	", USER_NAME"
-										+	", ENROLL_DATE"
-										+	"FROM "
-												+ "TB_USER "
+										+	", ENROLL_DATE "
+										+	"FROM TB_USER "
 										+ "ORDER "
 												+ "BY "
 														+ "ENROLL_DATE DESC";
 		
+		PreparedStatement pstmt = null;
+		ResultSet rset=null;
+		try {
+			pstmt = conn.prepareStatement(sql);
+			rset = pstmt.executeQuery();
+			while(rset.next()) {
+			// 조회 결과 컬럼 값을 DTO필드에 담는 작업 및 리스트에 요소로 추가
+				UserDTO user = new UserDTO();
+				user.setUserNo(rset.getInt("USER_NO"));
+				user.setUserId(rset.getString("USER_ID"));
+				user.setUserPw(rset.getString("USER_PW"));
+				user.setUserName(rset.getString("USER_NAME"));
+				user.setEnrollDate(rset.getDate("ENROLL_DATE"));
+				list.add(user);
+			}
+		} catch(SQLException e) {
+			e.printStackTrace();
+		} finally {
+			JdbcUtil.queryClose(pstmt, conn, rset);
+		}
 		return list;	
+	}
+	
+	/**
+	 * 
+	 * @param user 사용자가 입력한 아이디 / 비밀번호 / 이름이 각각 필드에 대입되어 있음
+	 * @return 아직 뭐 돌려줄지 안정함
+	 */
+	public int insertUser(Connection conn, UserDTO user) {
+//		Connection conn = null;
+		PreparedStatement pstmt = null;
+		
+		String sql = "INSERT INTO TB_USER VALUES"
+							+	 "(SEQ_USER_NO.NEXTVAL, ?, ?, ?, SYSDATE)";
+		int result = 0;
+		try {
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, user.getUserId());
+			pstmt.setString(2, user.getUserPw());
+			pstmt.setString(3, user.getUserName());
+			result = pstmt.executeUpdate();
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}  finally {
+			JdbcUtil.updateClose(pstmt, conn);
+		}
+			
+		return result;
+	}
+	
+	public String findUserName(Connection conn, String userId, String userPw) {
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		String sql = "SELECT USER_NAME FROM TB_USER WHERE USER_ID = ? AND USER_PW = ?";
+		String userName = "";
+		try {
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, userId);
+			pstmt.setString(2, userPw);			
+			rs = pstmt.executeQuery();
+			if(rs.next()) {
+				userName = rs.getString("USER_NAME");
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			JdbcUtil.queryClose(pstmt, conn, rs);
+		}
+		return userName;
+	}
+	
+	public int changePw(Connection conn, String userId, String newPw) {
+		PreparedStatement pstmt = null;
+
+		String sql = "UPDATE TB_USER SET USER_PW = ? WHERE USER_ID = ?";
+		int rs=0;
+		try {
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, newPw);
+			pstmt.setString(2, userId);
+			rs = pstmt.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			JdbcUtil.updateClose(pstmt, conn);
+		}
+		return rs;
+	}
+	
+	public int deleteUser(Connection conn, String userId, String userPw) {
+		PreparedStatement pstmt = null;
+
+		String sql = "DELETE FROM TB_USER WHERE USER_ID = ? AND USER_PW = ?";
+		int rs = 0;
+		try {
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, userId);
+			pstmt.setString(2, userPw);
+			rs = pstmt.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			JdbcUtil.updateClose(pstmt, conn);
+		}
+		return rs;
+	}
+	
+	public UserDTO findUserNo(Connection conn, int userNo) {
+		UserDTO user = new UserDTO();
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		
+		String sql = "SELECT * FROM TB_USER WHERE USER_NO = ?";
+		
+		try {
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setInt(1, userNo);
+			rs = pstmt.executeQuery();
+			if(rs.next()) {
+				user.setUserNo(rs.getInt("USER_NO"));
+				user.setUserId(rs.getString("USER_ID"));
+				user.setUserPw(rs.getString("USER_PW"));
+				user.setUserName(rs.getString("USER_NAME"));
+				user.setEnrollDate(rs.getDate("ENROLL_DATE"));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			JdbcUtil.queryClose(pstmt, conn, rs);
+		}
+		return user;
+	}
+	
+	public UserDTO userIdSearch(Connection conn, String userId) {
+		UserDTO user = new UserDTO();
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		String sql = "SELECT * FROM TB_USER WHERE USER_ID = ?";
+		try {
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, userId);
+			rs = pstmt.executeQuery();
+			if(rs.next()) {
+				user.setUserNo(rs.getInt("USER_NO"));
+				user.setUserId(rs.getString("USER_ID"));
+				user.setUserPw(rs.getString("USER_PW"));
+				user.setUserName(rs.getString("USER_NAME"));
+				user.setEnrollDate(rs.getDate("ENROLL_DATE"));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			JdbcUtil.queryClose(pstmt, conn, rs);
+		}
+		return user;
 	}
 }

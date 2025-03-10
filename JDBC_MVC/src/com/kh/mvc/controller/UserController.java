@@ -1,5 +1,11 @@
 package com.kh.mvc.controller;
 
+import java.util.List;
+import java.util.Map;
+
+import com.kh.mvc.model.dao.UserDAO;
+import com.kh.mvc.model.dto.UserDTO;
+import com.kh.mvc.model.service.MemberService;
 
 /**
  * VIEW에서 온 요청을 처리해주는 클래스입니다.
@@ -8,7 +14,33 @@ package com.kh.mvc.controller;
  */
 public class UserController {
 
-	public void findAll() {
-		
+	private UserDAO userDao = new UserDAO();
+	private MemberService userService = new MemberService();
+	public List<UserDTO> findAll() {
+		return userService.findAll();
+	}
+	
+	public int insertUser(String userId, String userPw, String userName) {
+
+		return userService.insertUser(userId, userPw, userName);
+	}
+	
+	public String findUser(String userId, String userPw){
+		return userService.findUserName(userId, userPw);
+	}
+	public int changePw(String userId, String newPw) {
+		return userService.changePw(userId, newPw);
+	}
+	
+	public int deleteUser(String userId, String userPw) {
+		return userService.deleteUser(userId, userPw);
+	}
+	
+	public UserDTO findUserNo(int userNo) {
+		return userService.findUserNo(userNo);
+	}
+	
+	public UserDTO userIdSearch(String userId) {
+		return userService.userIdSearch(userId);
 	}
 }

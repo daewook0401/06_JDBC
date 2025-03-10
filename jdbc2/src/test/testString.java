@@ -1,16 +1,23 @@
 package test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class testString {
 	public static void main(String[] args) {
-		String a = "aBcDEfg";
-		String b = "";
-		for (char t : a.toCharArray()) {
-			if(t<=90) {
-				b=b+(char)(t+32);
-			} else {
-				b=b+(char)(t-32);
-			}
+		int asdf = 0;
+		String b = "w";
+		List<Object> lst = new ArrayList<Object>();
+		lst.add(asdf);
+		lst.add(b);
+		for(Object l : lst) {
+			System.out.println(l);
 		}
-		System.out.println(b);
+		asdf = 123;
+		b = "222";
+		for(Object l : lst) {
+			System.out.println(l);
+		}
+		
 	}
 }

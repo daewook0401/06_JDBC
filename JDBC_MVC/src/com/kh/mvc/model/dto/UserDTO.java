@@ -6,7 +6,7 @@ import java.sql.Date;
  * 
  */
 public class UserDTO {
-	private int userNo;
+	private int userNo = 0;
 	private String userId;
 	private String userPw;
 	private String userName;
